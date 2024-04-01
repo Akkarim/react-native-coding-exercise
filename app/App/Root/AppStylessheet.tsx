@@ -41,6 +41,7 @@ export const styles = StyleSheet.create({
       justifyContent: "center",
       paddingVertical: 35,
       paddingHorizontal: 55,
+      height: "50%"
     },
     listItem: {
       height:70,
