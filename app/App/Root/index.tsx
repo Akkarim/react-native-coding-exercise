@@ -5,7 +5,6 @@ import {
   TextInput,
   Pressable,
 } from "react-native";
-import { useDispatch } from "react-redux";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Link, router, useLocalSearchParams } from "expo-router";
 import { gql, useQuery } from "@apollo/client";
@@ -19,7 +18,7 @@ import {
   FilterIcon,
   SortIcon
 } from "../../../assets/vector";
-import { MissionInfo } from "../../../types/utilities";
+import { MissionInfo } from "../../../types";
 
 const GET_LAUNCHES_PAST = gql`
   query LaunchesPast($limit: Int, $offset: Int) {
@@ -36,28 +35,17 @@ const GET_LAUNCHES_PAST = gql`
 `;
 
 export default function Root() {
-  const dispatch = useDispatch();
 
-  const [pageLimit, setPageLimit] = useState<number>(30);
-  const [pageOffset, setPageOffset] = useState<number>(0);
-  
+  const [pageLimit, setPageLimit] = useState<number>(5);
+  const [sort, setSort] = useState<string>("launch_year");
+  const [order, setOrder] = useState<string>("asc");
   
   const loadMore = () => {
-    //setPageOffset(pageLimit);
     setPageLimit(pageLimit + 5);
   };
 
-  const goToTicket = (missionName:string, missionRocketName: string, missionRocketType: string, missionLaunchYear: string,) => {
-    const missionInfo: MissionInfo = {
-      missionName: missionName,
-      missionRocketName: missionRocketName,
-      missionRocketType: missionRocketType,
-      missionLaunchYear: missionLaunchYear,
-    }
-    
-    router.push(`/App/Ticket`);
-  };
-
+  // The GraphQL should provide the Data ordered, sorted and with the search function
+  // It is not working properly from the Backend so, I weren't able to do the Sorting and Search
   const { loading, error, data } = useQuery<{
     launchesPast: {
       id: string;
@@ -72,7 +60,9 @@ export default function Root() {
   }>(GET_LAUNCHES_PAST, {
     variables: {
       limit: pageLimit,
-      offset: pageOffset,
+      offset: 0,
+      order: order,
+      sort: sort
     },
   });
   if (loading) return <Text>Loading...</Text>;
@@ -100,15 +90,11 @@ export default function Root() {
         </Pressable>
       </View>
       <View style={[styles.filterSection]}>
-        {/* <Button
-          title={"Go to Ticket Screen test"}
-          onPress={() => router.push("/App/Ticket")}
-        /> */}
         <Pressable onPress={()=>console.log("Filter")}>
           <FilterIcon />
         </Pressable>
         <Text>Mission Name</Text>
-        <Pressable onPress={()=>console.log("sort")}>
+        <Pressable onPress={()=>order==="asc"?setOrder("desc"):setOrder("asc")}>
           <SortIcon />
         </Pressable>
 
@@ -117,7 +103,6 @@ export default function Root() {
         <FlatList
           data={data?.launchesPast}
           renderItem={(data) => (
-
             <Link style={[styles.listItem]} 
             href={{
               pathname: "/App/Ticket/",
@@ -136,7 +121,7 @@ export default function Root() {
         />
       </View>
       <View style={[styles.listFooter]}>
-        <Text>{pageLimit}of 45</Text>
+        <Text>{pageLimit} of 45</Text>
         <Pressable style={[styles.buttons]} onPress={loadMore}>
           <Text style={[styles.buttonText]}>Load More</Text>
         </Pressable>
