@@ -1,7 +1,5 @@
 import {
-  StyleSheet,
   Text,
-  Button,
   FlatList,
   View,
   TextInput,
@@ -9,96 +7,55 @@ import {
 } from "react-native";
 import { useDispatch } from "react-redux";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { router } from "expo-router";
+import { Link, router, useLocalSearchParams } from "expo-router";
 import { gql, useQuery } from "@apollo/client";
+import { styles } from "./AppStylessheet";
 import { useState } from "react";
 import {
   AppLogo,
   Banner,
   RocketIcon,
   PlanetIcon,
+  FilterIcon,
+  SortIcon
 } from "../../../assets/vector";
+import { MissionInfo } from "../../../types/utilities";
 
 const GET_LAUNCHES_PAST = gql`
-  query LaunchesPast($limit: Int, $offset: Int, $order: String, $sort: String) {
-    launchesPast(limit: $limit, offset: $offset, order: $order, sort: $sort) {
+  query LaunchesPast($limit: Int, $offset: Int) {
+    launchesPast(limit: $limit, offset: $offset) {
       id
       launch_year
       mission_name
+      rocket {
+        rocket_name
+        rocket_type
+      }
     }
   }
 `;
 
 export default function Root() {
   const dispatch = useDispatch();
-  const [pageLimit, setPageLimit] = useState<number>(5);
+
+  const [pageLimit, setPageLimit] = useState<number>(30);
   const [pageOffset, setPageOffset] = useState<number>(0);
-
-  const styles = StyleSheet.create({
-    app: {
-      backgroundColor: "#f4ddb5",
-      height: 57,
-    },
-    appHeader: {
-      display: "flex",
-      flexDirection: "row",
-      justifyContent: "space-between",
-      alignItems: "center",
-      backgroundColor: "#193247",
-    },
-    searchArea: {
-      display: "flex",
-      flexDirection: "row",
-      justifyContent: "space-between",
-      padding: 20,
-    },
-    searchTextBox: {
-      backgroundColor: "#193247",
-      borderRadius: 16,
-      paddingVertical: 10,
-      paddingHorizontal: 60,
-      color: "#ffffff",
-    },
-    buttons: {
-      backgroundColor: "#d14b39",
-      borderRadius: 16,
-      paddingVertical: 10,
-      paddingHorizontal: 30,
-    },
-    bannerView: {
-      display: "flex",
-      justifyContent: "center",
-      paddingHorizontal: 55,
-      margin: 10,
-    },
-    list: {
-      display: "flex",
-      justifyContent: "center",
-      paddingVertical: 35,
-      paddingHorizontal: 55,
-      marginLeft: 50,
-    },
-    listItem: {
-      height:30,
-      textAlign: "center",
-      padding: 20,
-      marginVertical: 8,
-      marginHorizontal: 16,
-      borderRadius: 25,
-      backgroundColor: "#fdf2dd",
-    },
-    listFooter: {
-      display: "flex",
-      flexDirection: "row",
-      justifyContent: "space-around",
-      paddingHorizontalVertical: 15,
-      alignItems: "center"
-    },
-  });
-
+  
+  
   const loadMore = () => {
     //setPageOffset(pageLimit);
     setPageLimit(pageLimit + 5);
+  };
+
+  const goToTicket = (missionName:string, missionRocketName: string, missionRocketType: string, missionLaunchYear: string,) => {
+    const missionInfo: MissionInfo = {
+      missionName: missionName,
+      missionRocketName: missionRocketName,
+      missionRocketType: missionRocketType,
+      missionLaunchYear: missionLaunchYear,
+    }
+    
+    router.push(`/App/Ticket`);
   };
 
   const { loading, error, data } = useQuery<{
@@ -106,14 +63,16 @@ export default function Root() {
       id: string;
       mission_id: string;
       mission_name: string;
-      sort: string;
+      launch_year: string;
+      rocket: {
+        rocket_name: string;
+        rocket_type: string;
+    }
     }[];
   }>(GET_LAUNCHES_PAST, {
     variables: {
       limit: pageLimit,
       offset: pageOffset,
-      sort: "launch_year",
-      order: "asc",
     },
   });
   if (loading) return <Text>Loading...</Text>;
@@ -137,18 +96,41 @@ export default function Root() {
           onChangeText={(newText) => console.log(newText)}
         />
         <Pressable style={[styles.buttons]}>
-          <Text>Search</Text>
+          <Text style={[styles.buttonText]}>Search</Text>
         </Pressable>
       </View>
-      <Button
-        title={"Go to Ticket Screen test"}
-        onPress={() => router.push("/App/Ticket")}
-      />
+      <View style={[styles.filterSection]}>
+        {/* <Button
+          title={"Go to Ticket Screen test"}
+          onPress={() => router.push("/App/Ticket")}
+        /> */}
+        <Pressable onPress={()=>console.log("Filter")}>
+          <FilterIcon />
+        </Pressable>
+        <Text>Mission Name</Text>
+        <Pressable onPress={()=>console.log("sort")}>
+          <SortIcon />
+        </Pressable>
+
+      </View>
       <View style={[styles.list]}>
         <FlatList
           data={data?.launchesPast}
           renderItem={(data) => (
-            <Text style={[styles.listItem]}>{data.item.mission_name}</Text>
+
+            <Link style={[styles.listItem]} 
+            href={{
+              pathname: "/App/Ticket/",
+              params: {
+                missionName: data?.item.mission_name, 
+                missionRocketName: data?.item.rocket.rocket_name, 
+                missionRocketType: data?.item.rocket.rocket_type, 
+                missionLaunchYear: data?.item.launch_year
+              },
+            }}>
+              <Text >{data?.item.mission_name}</Text>
+            </Link>
+
           )}
           keyExtractor={(item) => item.id}
         />
@@ -156,7 +138,7 @@ export default function Root() {
       <View style={[styles.listFooter]}>
         <Text>{pageLimit}of 45</Text>
         <Pressable style={[styles.buttons]} onPress={loadMore}>
-          <Text>Load More</Text>
+          <Text style={[styles.buttonText]}>Load More</Text>
         </Pressable>
       </View>
     </SafeAreaView>

@@ -1,7 +1,7 @@
 import {StyleProp, ViewStyle} from "react-native";
 import { SvgXml } from "react-native-svg";
 
-export function AppLogo({style}: {style?: StyleProp<ViewStyle>}) {
+export function SortIcon({style}: {style?: StyleProp<ViewStyle>}) {
     return (
         <SvgXml
             style={style}

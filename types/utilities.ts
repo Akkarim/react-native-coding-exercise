@@ -9,3 +9,10 @@ export type IntRange<F extends number, T extends number> = Exclude<
   Enumerate<T>,
   Enumerate<F>
 >;
+
+export type MissionInfo = {
+  missionName: string;
+  missionRocketName: string;
+  missionRocketType: string;
+  missionLaunchYear: string;
+}
